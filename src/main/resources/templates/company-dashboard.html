@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Company Dashboard (CSR)</title>
+  <link rel="stylesheet" type="text/css" href="/css/products-csr.css"> <style>
+  /* Thêm style riêng cho ví dụ này nếu cần */
+  .dashboard-section {
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .employee-card {
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    background-color: #fafafa;
+  }
+  .employee-card h3 {
+    margin-top: 0;
+    color: #007bff;
+  }
+  .employee-card p {
+    margin: 5px 0;
+    font-size: 0.95em;
+  }
+  .employee-card .skills span {
+    display: inline-block;
+    background-color: #e9ecef;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 0.85em;
+  }
+  .project-card {
+    border: 1px solid #e0ffe0;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    background-color: #f0fff0;
+  }
+  .project-card h3 {
+    margin-top: 0;
+    color: #28a745;
+  }
+  .project-card p {
+    margin: 5px 0;
+    font-size: 0.95em;
+  }
+  .project-card .members span {
+    font-weight: bold;
+    margin-right: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>Company Dashboard</h1>
+<p id="loading">Đang tải dữ liệu công ty...</p>
+<p id="error"></p>
+
+<div id="dashboardContent" style="display: none;">
+  <div class="dashboard-section">
+    <h2>Thông tin tổng quan</h2>
+    <p><strong>Tên công ty:</strong> <span id="companyName"></span></p>
+    <p><strong>Năm thành lập:</strong> <span id="foundedYear"></span></p>
+    <p><strong>Tổng số nhân viên:</strong> <span id="totalEmployees"></span></p>
+    <p><strong>Dự án đang hoạt động:</strong> <span id="activeProjects"></span></p>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>Nhân viên</h2>
+    <div id="employeesContainer">
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>Dự án</h2>
+    <div id="projectsContainer">
+    </div>
+  </div>
+</div>
+
+<script>
+  // 'DOMContentLoaded' đảm bảo rằng tất cả các phần tử HTML đã tồn tại trong cây DOM trước khi code
+  // JavaScript của bạn chạy, ngăn ngừa các lỗi "element not found".
+  document.addEventListener('DOMContentLoaded', function() {
+    const loadingMessage = document.getElementById('loading');
+    const errorMessage = document.getElementById('error');
+    const dashboardContent = document.getElementById('dashboardContent');
+
+    const companyNameSpan = document.getElementById('companyName');
+    const foundedYearSpan = document.getElementById('foundedYear');
+    const totalEmployeesSpan = document.getElementById('totalEmployees');
+    const activeProjectsSpan = document.getElementById('activeProjects');
+
+    const employeesContainer = document.getElementById('employeesContainer');
+    const projectsContainer = document.getElementById('projectsContainer');
+
+    fetch('/api/company-data')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json(); // Chuyển đổi response thành đối tượng JSON
+            })
+            .then(data => {
+              loadingMessage.style.display = 'none';
+              errorMessage.style.display = 'none';
+              dashboardContent.style.display = 'block'; // Hiển thị toàn bộ dashboard
+
+              // 1. Hiển thị thông tin tổng quan
+              companyNameSpan.textContent = data.companyName;
+              foundedYearSpan.textContent = data.foundedYear;
+              totalEmployeesSpan.textContent = data.totalEmployees;
+              activeProjectsSpan.textContent = data.activeProjects;
+
+              // 2. Hiển thị danh sách nhân viên
+              if (data.employees && data.employees.length > 0) {
+                data.employees.forEach(employee => {
+                  const employeeCard = document.createElement('div');
+                  employeeCard.className = 'employee-card';
+                  employeeCard.innerHTML = `
+                                <h3>${employee.name} (${employee.id})</h3>
+                                <p><strong>Chức vụ:</strong> ${employee.position}</p>
+                                <p><strong>Phòng ban:</strong> ${employee.department}</p>
+                                <p><strong>Email:</strong> <a href="mailto:${employee.contact.email}">${employee.contact.email}</a></p>
+                                <p><strong>Điện thoại:</strong> ${employee.contact.phone}</p>
+                                <p class="skills"><strong>Kỹ năng:</strong> ${employee.skills.map(skill => `<span>${skill}</span>`).join('')}</p>
+                            `;
+                  employeesContainer.appendChild(employeeCard);
+                });
+              } else {
+                employeesContainer.innerHTML = '<p>Không có dữ liệu nhân viên.</p>';
+              }
+
+              // 3. Hiển thị danh sách dự án
+              if (data.projects && data.projects.length > 0) {
+                data.projects.forEach(project => {
+                  const projectCard = document.createElement('div');
+                  projectCard.className = 'project-card';
+                  projectCard.innerHTML = `
+                                <h3>${project.name} (${project.projectId})</h3>
+                                <p><strong>Trạng thái:</strong> ${project.status}</p>
+                                <p><strong>Ngày bắt đầu:</strong> ${project.startDate}</p>
+                                <p><strong>Ngày kết thúc:</strong> ${project.endDate || 'N/A'}</p>
+                                <p class="members"><strong>Thành viên (IDs):</strong> ${project.members.map(memberId => `<span>${memberId}</span>`).join(', ')}</p>
+                            `;
+                  projectsContainer.appendChild(projectCard);
+                });
+              } else {
+                projectsContainer.innerHTML = '<p>Không có dữ liệu dự án.</p>';
+              }
+
+            })
+            .catch(error => {
+              loadingMessage.style.display = 'none';
+              errorMessage.style.display = 'block';
+              errorMessage.textContent = 'Lỗi khi tải dữ liệu công ty: ' + error.message;
+              console.error('Lỗi tải dữ liệu công ty:', error);
+            });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hiển thị dữ liệu JSON</title>
+</head>
+<body>
+  <h1>Dữ liệu từ API:</h1>
+    <div id="dataContainer">
+      <p>Tên: <span id="name"></span></p>
+      <p>Tuổi: <span id="age"></span></p>
+      <p>Thành phố: <span id="city"></span></p>
+      <p>Quốc gia: <span id="country"></span></p>
+    </div>
+
+  <script>
+    fetch('/api/data-json') // Hoặc '/api/data-json' tùy thuộc vào controller
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('name').textContent = data.name || '';
+              document.getElementById('age').textContent = data.age || '';
+              document.getElementById('city').textContent = data.city || '';
+              document.getElementById('country').textContent = data.country || '';
+            })
+            .catch(error => {
+              console.error('Lỗi khi gọi API:', error);
+              document.getElementById('dataContainer').innerHTML = '<p>Không thể tải dữ liệu.</p>';
+            });
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Product List (CSR)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #loading {
+            color: gray;
+        }
+
+        #error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<h1>Product List (CSR)</h1>
+<p id="loading">Đang tải dữ liệu...</p>
+<p id="error" style="display: none;"></p>
+
+<table id="productTable" style="display: none;">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên sản phẩm</th>
+        <th>Giá</th>
+    </tr>
+    </thead>
+
+    <tbody id="productTableBody">
+    </tbody>
+</table>
+<p>Đây là trang được tải dữ liệu động bởi trình duyệt.</p>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const loadingMessage = document.getElementById('loading');
+        const errorMessage = document.getElementById('error');
+        const productTable = document.getElementById('productTable');
+        const productTableBody = document.getElementById('productTableBody');
+
+        // 1. Gửi request AJAX tới API endpoint
+        fetch('/api/products')  //gửi 1 yêu cầu GET đến đường dẫn, đường dẫn này được liên kết với @RestController trong Spring Boot
+            .then(response => {
+                if (!response.ok) { // `response.ok` là true nếu status code nằm trong khoảng 200-299.
+                    throw new Error(`HTTP error! status: ${response.status}`); // Ném ra một lỗi để chuyển sang khối `.catch()`.
+                }
+                return response.json(); // 2. Chuyển đổi response thành JSON
+
+            })
+            .then(products => { // `products` là đối tượng JavaScript đã được phân tích từ chuỗi JSON (thường là một mảng các đối tượng sản phẩm).
+                // 3. Xử lý dữ liệu JSON và chèn vào DOM
+                loadingMessage.style.display = 'none'; // Ẩn thông báo loading
+                productTable.style.display = 'table'; // Hiển thị bảng
+
+                if (products.length === 0) {
+                    productTableBody.innerHTML = '<tr><td colspan="3">Không có sản phẩm nào.</td></tr>';
+                } else {
+                    products.forEach(product => {       //duyệt qua từng product
+                        const row = document.createElement('tr');// Tạo một phần tử HTML mới là <tr> (hàng bảng).
+                        // Đặt nội dung HTML của hàng (`row`) bằng cách sử dụng template literal (``).
+                        // Nó chèn các giá trị `product.id`, `product.name`, và `product.price`
+                        // vào các ô <td> tương ứng.
+                        // `product.price.toFixed(2)` định dạng giá thành một chuỗi với 2 chữ số thập phân.
+                        row.innerHTML = `
+                                <td>${product.id}</td>
+                                <td>${product.name}</td>
+                                <td>${product.price.toFixed(2)}</td>
+                            `;
+                        //nếu ko dùng cú pháp Template Literals
+                        // row.innerHTML = '<td>' + product.id + '</td>' +
+                        //     '<td>' + product.name + '</td>' +
+                        //     '<td>' + product.price.toFixed(2) + '</td>';
+                        productTableBody.appendChild(row);// Thêm hàng (`row`) vừa tạo vào phần tử `tbody` của bảng.
+                    });
+                }
+            })
+            .catch(error => {
+                // 4. Xử lý lỗi
+                loadingMessage.style.display = 'none'; // Ẩn loading
+                errorMessage.style.display = 'block'; // Hiển thị lỗi
+                errorMessage.textContent = 'Lỗi khi tải sản phẩm: ' + error.message;// Đặt nội dung văn bản của phần tử lỗi bằng một thông báo chi tiết về lỗi.
+                console.error('There was an error!', error);// In lỗi ra console của trình duyệt để gỡ lỗi.
+            });
+    });
+</script>
+</body>
+</html>

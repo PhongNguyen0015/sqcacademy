@@ -1,4 +1,4 @@
-package com.example.demo.springboot.entity;
+package com.example.demo.springboot.model;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
